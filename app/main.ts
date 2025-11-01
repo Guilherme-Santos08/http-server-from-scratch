@@ -79,9 +79,12 @@ const server = net.createServer((socket) => {
       if (requestPath.startsWith("/echo/") && httpMethod === "GET") {
         const pathSegments = requestPath.split("/");
         if (pathSegments.length > 3) {
+          socket.write(`HTTP/1.1 ${HTTP_STATUS_CODE.NOT_FOUND} Not Found\r\n`);
           socket.write(
-            `HTTP/1.1 ${HTTP_STATUS_CODE.NOT_FOUND} Not Found\r\n\r\n`
+            `Connection: ${shouldKeepAlive ? "keep-alive" : "close"}\r\n`
           );
+          socket.write("\r\n");
+          if (!shouldKeepAlive) socket.end();
           buffer = buffer.subarray(headerEndIndex + 4);
           requestCount++;
           console.log(
@@ -199,7 +202,7 @@ const server = net.createServer((socket) => {
 
         // Verifica se o body está completo (ver docs/06-post-content-length.md)
         if (buffer.length < totalLength) {
-          break;  // Sai do while, aguarda mais dados do body
+          break; // Sai do while, aguarda mais dados do body
         }
 
         // Extrai body completo
